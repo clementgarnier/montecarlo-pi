@@ -1,0 +1,283 @@
+#
+# Programme developpe par Guy Tremblay, Professeur au dept. d'informatique de l'UQAM,
+# dans le cadre du cours INF7440 (2002, 2003, 2004).
+#
+# Tous droits reserves.
+#
+
+
+body MPDUnit
+  bool DEBUG = false;
+
+  const int MAX_CARS_MESSAGE = 1024;
+  const int MAX_MESSAGES     = 256;
+
+  #############################################################
+  # Variables globales.
+  #
+  string[MAX_CARS] nomSuiteCourante;
+
+  string[MAX_CARS] nomCasDeTestCourant;
+  bool nomDeCasDeTestDefini = false;
+
+  bool casDeTestEchoue = false;
+
+  int nbSuites = 0
+  int nbCasDeTest = 0;
+  int nbAssertions = 0;
+
+  int nbCasDeTestEchoues = 0;
+  int nbAssertionsEchouees = 0;
+
+  int erreursAssert = 0;
+
+  int nbAssertionsDansCasDeTest;
+  
+  string[MAX_CARS_MESSAGE] messages[MAX_MESSAGES];
+
+  int start = age();
+
+  
+  proc activerTrace()
+  { DEBUG = true; }
+
+  proc desactiverTrace()
+  { DEBUG = true; }
+
+  #############################################################
+  # Procedures pour definir des suites et des cas de test.
+  #############################################################
+
+  proc mkSuiteDeTests( nom, initialisation, lesCasDeTest, finalisation ) returns suite
+  {
+    suite = new(SuiteDeTestsRec);
+    suite^.nom = nom;
+    suite^.initialiser = initialisation;
+    suite^.lesCasDeTest = new([ub(lesCasDeTest)] cap CasDeTest);
+    for [i = 1 to ub(lesCasDeTest)] {
+      suite^.lesCasDeTest^[i] = lesCasDeTest[i];
+    }
+    suite^.finaliser = finalisation;
+  }
+
+  proc nommerCasDeTest( nom )
+  {
+    if (DEBUG) {
+      printf( "+++ nommerCasDeTest( %s ) +++\n", nom );
+    }
+    nomCasDeTestCourant  = nom;
+    nomDeCasDeTestDefini = true;
+  }
+
+
+  #############################################################
+  # Procedures pour executer des suites de test.
+  #############################################################
+
+  procedure executerSuiteDeTests( SuiteDeTests suite ) 
+  {  
+    nomSuiteCourante = suite^.nom;
+    for [i = 1 to ub(suite^.lesCasDeTest^)] {
+      nomDeCasDeTestDefini = false;
+      if (suite^.initialiser ~= null) { suite^.initialiser(); }
+      nbAssertionsDansCasDeTest = 0;
+      suite^.lesCasDeTest^[i]();  
+      nbAssertions += nbAssertionsDansCasDeTest;
+      #assert(nomDeCasDeTestDefini, "Aucun appel a nommerCasDeTest dans un cas de test");
+      nomDeCasDeTestDefini = false;
+      if (suite^.finaliser ~= null) { suite^.finaliser(); }
+      if (casDeTestEchoue) {
+        nbCasDeTestEchoues += 1;
+        printf( stdout, "E");
+        casDeTestEchoue = false;
+      } else {
+        printf( stdout, ".");
+      }
+      nbCasDeTest += 1;
+    }
+    nbSuites += 1;
+  }
+
+  proc executerSuitesDeTests( suites )
+  {
+    for [i = 1 to ub(suites)] {
+      executerSuiteDeTests(suites[i]);
+    }
+    printf( stdout, "\nTermine en %d ms\n", age() - start );
+    if (nbAssertionsEchouees > 0) {
+      printf( stdout, "\nIl y a eu %d assertion", nbAssertionsEchouees );
+      if (nbAssertionsEchouees > 1) { printf( stdout, "s" ); }
+      printf( stdout, " incorrecte" );
+      if (nbAssertionsEchouees > 1) { printf( stdout, "s" ); }
+      printf( stdout, ":\n" );
+      for [i = 1 to nbAssertionsEchouees] {
+        printf( stdout, " %d) %s", i, messages[i] );
+      }
+      printf( stdout, "\nECHECS!!\n" );
+    }
+    printf( stdout, "Sommaire: %d suite(s), %d tests, %d assertions evaluees, %d cas echoues, %d assertions incorrectes, %d erreur(s) d'assertion\n", 
+            nbSuites, nbCasDeTest, nbAssertions, nbCasDeTestEchoues, (nbAssertionsEchouees-erreursAssert), erreursAssert );
+  }
+
+
+  #############################################################
+  # Procedures pour assertions.
+  #
+  procedure ajouterMessage( string[MAX_CARS] nomSuite,
+                            string[MAX_CARS] nomTest,
+                            int nbAssertionsDansCasDeTest,
+                            string[*] msg )
+  {
+    #assert( nbAssertionsEchouees <= MAX_MESSAGES, "Nombre d'assertions echouees trop grand" );
+    sprintf( messages[nbAssertionsEchouees], "\"%s\"::\"%s\"\n     #%d: %s\n", nomSuite, nomTest, nbAssertionsDansCasDeTest, msg );
+  }
+
+  proc assertTrue( c )
+  {
+    nbAssertionsDansCasDeTest += 1;
+    if (~c) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, 
+                     "assertTrue incorrect" );
+    }
+  }
+  
+  proc assertFalse( c )
+  {
+    nbAssertionsDansCasDeTest += 1;
+    if (c) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, 
+                     "assertFalse incorrect" );
+    }
+  }
+
+  proc assertCharEquals( c1, c2 )
+  {
+    nbAssertionsDansCasDeTest += 1;
+    if (c1 ~= c2) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      string[MAX_CARS_MESSAGE/2] msg;
+      sprintf( msg, "assertCharEquals(%c, %c) incorrect :: Attendu = '%c' <> Obtenu = '%c'", c1, c2, c1, c2 );
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+    }
+  }
+
+  proc assertIntEquals( n1, n2 )
+  {
+    nbAssertionsDansCasDeTest += 1;
+    if (n1 ~= n2) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      string[MAX_CARS_MESSAGE/2] msg;
+      sprintf( msg, "assertIntEquals(%d, %d) incorrect :: Attendu = %d <> Obtenu = %d", n1, n2, n1, n2 );
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+    }
+  }
+
+  proc assertIntArrayEquals( a1, a2 )
+  {
+    nbAssertionsDansCasDeTest += 1;
+    int n1 = ub(a1);
+    int n2 = ub(a2);
+    if (n1 ~= n2) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      string[MAX_CARS_MESSAGE/2] msg;
+      sprintf( msg, "assertIntArrayEquals(_, _) incorrect :: Taille attendue = %d <> Taille obtenue = %d", n1, n2 );
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+      return;
+    }
+    for [k = 1 to n1] {
+      int v1 = a1[k];
+      int v2 = a2[k];
+      if (v1 ~= v2) {
+        casDeTestEchoue = true;
+        nbAssertionsEchouees++;
+        string[MAX_CARS_MESSAGE/2] msg;
+        sprintf( msg, "assertIntArrayEquals(_, _) incorrect [index %d] :: Attendu = %d <> Obtenu = %d", k, v1, v2 );
+        ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+        return;
+      }
+    } 
+  }
+
+  proc assertRealArrayEquals( a1, a2, precision )
+  {
+    nbAssertionsDansCasDeTest += 1;
+    int n1 = ub(a1);
+    int n2 = ub(a2);
+    if (n1 ~= n2) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      string[MAX_CARS_MESSAGE/2] msg;
+      sprintf( msg, "assertRealArrayEquals(_, _) incorrect :: Taille attendue = %d <> Taille obtenue = %d", n1, n2 );
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+      return;
+    }
+    for [k = 1 to n1] {
+      real v1 = a1[k];
+      real v2 = a2[k];
+      if (abs(v1 - v2) > precision) {
+        casDeTestEchoue = true;
+        nbAssertionsEchouees++;
+        string[MAX_CARS_MESSAGE/2] msg;
+        sprintf( msg, "assertRealArrayEquals(_, _, %f) incorrect [index %d] :: Attendu = %f <> Obtenu = %f", precision, k, v1, v2 );
+        ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+        return;
+      }
+    } 
+  }
+
+  proc assertRealEquals( r1, r2, precision )
+  {
+    nbAssertionsDansCasDeTest += 1;
+    if (abs(r1 - r2) > precision) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      string[MAX_CARS_MESSAGE/2] msg;
+      sprintf( msg, "assertRealEquals(%f, %f, %f) incorrect :: Attendu = %f <> Obtenu = %f", r1, r2, precision, r1, r2 );
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+    }
+  }
+
+  proc assertStringEquals( s1, s2 )
+  {
+    nbAssertionsDansCasDeTest += 1;
+    if (s1 != s2) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      string[MAX_CARS_MESSAGE/2] msg;
+      sprintf( msg, "assertStringEquals(%s, %s) incorrect :: Attendu = \"%s\" <> Obtenu = \"%s\"", s1, s2, s1, s2 );
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+    }
+  }
+
+  proc assertEquals( equals, attendu, obtenu ) 
+  {
+    nbAssertionsDansCasDeTest += 1;
+    if (~equals) {
+      casDeTestEchoue = true;
+      nbAssertionsEchouees++;
+      string[MAX_CARS_MESSAGE/2] msg;
+      sprintf( msg, "assertEquals(%b, _, _) incorrect :: Attendu = \"%s\" <> Obtenu = \"%s\"", equals, attendu, obtenu );
+      ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+    }
+  }
+
+  proc assertAssertInvalide( s )
+  {
+    casDeTestEchoue = true;
+    nbAssertionsEchouees++;
+    erreursAssert++;
+    string[MAX_CARS_MESSAGE/2] msg;
+    sprintf( msg, "*** Assert incorrect *** : \"%s\"", s );
+    ajouterMessage( nomSuiteCourante, nomCasDeTestCourant, nbAssertionsDansCasDeTest, msg );
+  }
+
+end
+
+

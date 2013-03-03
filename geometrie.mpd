@@ -1,0 +1,19 @@
+
+# Module pour gérer des points dans un espace à deux dimensions.
+
+global Geometrie
+
+    # Type fondamental : un point est représenté par ses coordonnées x et y.
+    
+    type Point = ptr PointRec;
+
+    type PointRec = rec(
+      real x;
+      real y;
+    );    
+
+    op point(real x, real y) returns Point p
+
+    op estDansCercle(Point p) returns bool b 
+
+body Geometrie separate

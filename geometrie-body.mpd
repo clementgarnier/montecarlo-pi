@@ -1,0 +1,15 @@
+body Geometrie
+
+  proc point(x, y) returns p
+  {
+      p = new(PointRec)
+      p^.x = x;
+      p^.y = y;
+  }
+
+  proc estDansCercle(p) returns b
+  {
+     b = (p^.x**2 + p^.y**2 <= 1);
+  }
+
+end

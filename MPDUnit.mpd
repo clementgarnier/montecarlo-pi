@@ -1,0 +1,106 @@
+#
+# Programme developpe par Guy Tremblay, Professeur au dept. d'informatique de l'UQAM,
+# dans le cadre du cours INF7440 (2002, 2003, 2004, 2007).
+#
+# Tous droits reserves.
+#
+
+
+global MPDUnit
+  # Nombre maximum de caracteres dans le nom d'un cas ou d'une suite de test.
+  const int MAX_CARS = 128;
+
+  # Type procedure (sans argument et sans resultat) pour definir un cas
+  # de test ou une operation d'initialisation ou de finalisation.
+  #
+  # Une procedure pour un CasDeTest doit etre une procedure sans argument. 
+  # Cette procedure *doit* effectuer un appel a nommerCasDeTest (voir plus bas).
+  #
+  optype CasDeTest      = ();
+  optype Initialisation = ();
+  optype Finalisation   = ();
+
+
+  # Type opaque (prive).
+  type SuiteDeTests = ptr SuiteDeTestsRec;
+
+
+
+  ######################################################################
+  # Operations pour construire une suite de tests.
+  ######################################################################
+
+  # Une suite de tests est composee d'un ou plusieurs cas de tests.
+  # Un module de test peut definir et executer une ou plusieurs suites de tests.
+
+  op mkSuiteDeTests( 
+     string[MAX_CARS] nom,               # Le nom de la suite de tests.
+     cap Initialisation initialisation,  # La procedure d'initialisation.
+     cap CasDeTest lesCasDeTest[*],      # Les differents cas de test.
+     cap Finalisation finalisation       # La procedure de finalisation.
+  ) returns SuiteDeTests suite;
+
+  # Note : Lorsqu'une suite de tests est definie par un unique cas de test
+  # (disons cdt) et qu'aucune operation d'initialisation ou de finalisation
+  # n'est specifiee, on peut alors utiliser la forme suivante :
+  #   mkSuiteDeTests( "NomDeSuite", noop, ([1] cdt), noop );
+
+  ######################################################################
+  # Operations pour executer une ou des suites de tests.
+  ######################################################################
+
+  op executerSuitesDeTests( SuiteDeTests suites[*] );
+
+  # Note : Lorsqu'on veut executer une unique suite de tests (disons sdt),
+  # on peut alors utiliser la forme suivante :
+  #   executerSuitesDeTests( ([1] sdt) );
+
+  #
+  ######################################################################
+  # Operations a utiliser dans les cas de test.
+  ######################################################################
+
+  # Operation pour nommer/identifier un cas de test.
+  # Cette procedure *doit* etre appelee exactement une fois, 
+  # au debut de l'execution de la procedure qui definit le cas de test.  
+  op nommerCasDeTest( string[MAX_CARS] nom );
+
+
+
+  # Operations pour assertions diverses.
+  op assertTrue ( bool c );
+  op assertFalse( bool c );
+
+  #  Signification standard des arguments:
+  #     Argument 1 => valeur attendue
+  #     Argument 2 => valeur obtenue
+  op assertCharEquals  ( char      n1, char      n2  );
+  op assertIntEquals   ( int       n1, int       n2  );
+  op assertRealEquals  ( real      r1, real      r2, real precision );
+  op assertStringEquals( string[*] s1, string[*] s2  );
+
+  # Assertions pour equivalence entre tableaux.
+  op assertIntArrayEquals ( int  a1[*], int  a2[*] );
+  op assertRealArrayEquals( real a1[*], real a2[*], real precision );
+
+  # Assertion pour egalite entre valeurs arbitraires.
+  op assertEquals( bool equals, string[*] attendu, string[*] obtenu );
+
+  # Assertion (utilisee par assert) pour signaler qu'un assert "ordinaire"
+  # n'est pas satisfait.
+  op assertAssertInvalide( string[*] s );
+
+  op activerTrace();
+  op desactiverTrace();
+
+  ########################################################################
+  ########################################################################
+  # Type prive.
+  type CasDeTestSeq = [*] cap CasDeTest;
+  type SuiteDeTestsRec = rec (
+      string[MAX_CARS] nom;
+      cap Initialisation initialiser;
+      ptr CasDeTestSeq lesCasDeTest;
+      cap Finalisation finaliser
+  );
+body MPDUnit separate
