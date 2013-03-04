@@ -80,6 +80,9 @@ tst3.out: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/Tests3.o
 mesurer-temps: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/MesurerTemps.o
 	mpdl $(MPDLFLAGS)  -o mesurer-temps Geometrie MPDUnit Pi MesurerTemps
 
+invoquer: $I/Geometrie.o $I/MPDUnit.o $I/Pi.o $I/MesurerTemps.o $I/Invoquer.o
+	mpdl $(MPDLFLAGS)  -o invoquer Geometrie MPDUnit Pi MesurerTemps Invoquer
+
 $I/Pi.o: $I/Pi.spec $I/Geometrie.spec $I/Geometrie.o $I/Barriere.spec $I/Barriere.o\
  pi-body.mpd
 	$(MPD) $(MPDFLAGS) -b pi-body.mpd
@@ -115,6 +118,15 @@ $I/MesurerTemps.o: $I/MesurerTemps.spec $I/Pi.spec\
 
 $I/MesurerTemps.spec: mesurer-temps.mpd
 	$(MPD) $(MPDFLAGS) -s mesurer-temps.mpd
+
+$I/Invoquer.o: $I/Invoquer.spec $I/Pi.spec\
+ $I/Pi.o $I/Geometrie.spec\
+ $I/Geometrie.o $I/MesurerTemps.spec $I/MesurerTemps.o \
+ invoquer.mpd
+	$(MPD) $(MPDFLAGS) -b invoquer.mpd
+
+$I/Invoquer.spec: invoquer.mpd
+	$(MPD) $(MPDFLAGS) -s invoquer.mpd
 
 $I/Tests00.o: $I/Tests00.spec $I/Pi.spec\
  $I/Pi.o $I/MPDUnit.spec $I/MPDUnit.o $I/Geometrie.spec\
@@ -158,7 +170,7 @@ $I/Tests3.spec: tst3.mpd
 
 clean:
 	rm -rf $I 
-	rm -f core a.out tst00.out tst0.out tst1.out tst2.out tst3.out mesurer-temps
+	rm -f core a.out tst00.out tst0.out tst1.out tst2.out tst3.out mesurer-temps invoquer
 	\rm -f *~
 
 cleanxtra:

@@ -1,0 +1,64 @@
+resource Invoquer()
+    import Pi
+    import MesurerTemps
+
+    const int NB_VERSIONS = 4;
+    
+    optype Proc = ();
+    
+    if(numargs() < 2) {
+        write("usage:");
+        write("    invoquer nomMethode nbPoints");
+        write("      - nomMethode: nom de la méthode à appeler");
+        write("      - nbPoints: nombre de points à générer");
+        stop(1);
+    }
+
+    int nbPoints; getarg(2, nbPoints);
+    if (nbPoints <= 0) {
+        write( "*** Erreur : nbPoints <= 0" );
+        stop(1);
+    }
+
+    string[25] nomMethode; getarg(1, nomMethode);
+
+    procedure calculerPrecision(real piApprox) returns real p {
+        p = abs(PI - piApprox)*100 / piApprox;
+    }
+
+    real pi;
+    
+    procedure invoquer(cap Proc p) {
+        p();
+        printf("pi=%f\n", pi);
+        printf("Erreur relative: %f pour cent\n", calculerPrecision(pi));
+    }
+
+    procedure mS() 
+    { pi  = calculS(nbPoints); }
+
+    procedure mPIF() 
+    { pi = calculPIF(nbPoints); }
+
+    procedure mPIGA() 
+    { pi = calculPIGA(nbPoints); }
+
+    procedure mPST() 
+    { pi = calculPST(nbPoints); }
+
+    cap Proc versions[NB_VERSIONS] = (mS, mPIF, mPIGA, mPST);
+    
+    # Les noms des versions qui peuvent etre executees.
+    string[25] nomVersion[NB_VERSIONS];
+    nomVersion[1] = "calculS";
+    nomVersion[2] = "calculPIF";
+    nomVersion[3] = "calculPIGA";
+    nomVersion[4] = "calculPST";
+
+    for [i = 1 to NB_VERSIONS] {
+        if(nomVersion[i] == nomMethode) {
+           invoquer(versions[i]);          
+        }
+    }
+
+end
