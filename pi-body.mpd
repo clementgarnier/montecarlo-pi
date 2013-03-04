@@ -12,32 +12,35 @@ body Pi
 
   sem mutex = 1;
 
-  procedure FA( ref int x, int incr ) returns int r
+  # Variables pour representer le sac de taches.
+  int restant;
+  int tailleTache = 100;
+  
+  procedure prendreTache()
   {
     P( mutex );
-    r = x;
-    x += incr;
-    V( mutex )
+    restant -= tailleTache;
+    V( mutex );
   }
-
-  int tailleTache = 10;
 
   proc definirTailleTache( tt )
   { tailleTache = tt; }
 
-  # Variables pour representer le sac de taches.
-  int suivant, borneSup;
-
   # Initialisation du sac de taches.
-  procedure initSacDeTaches( int bi, int bs )
-  { suivant = bi; borneSup = bs;  }
+  procedure initSacDeTaches( int nbTaches )
+  {
+      if(nbTaches % tailleTache != 0) {
+          printf("Le nombre de tâches doit être divisible par la taille du sac de tâches");
+          stop(1);
+      }
+      restant = nbTaches;
+  }
 
   # Retrait d'une tache du sac.
-  procedure obtenirTache( res int i, res int j ) returns bool disponible 
+  procedure obtenirTache() returns bool disponible 
   {
-    i = FA( suivant, tailleTache );
-    j = min( i + tailleTache - 1, borneSup );
-    disponible = (i <= borneSup);
+      prendreTache();
+      disponible = (restant > 0);
   }
 
   ##################################################
@@ -160,7 +163,23 @@ body Pi
   # Version parallele sac de taches.
   ##################################################
 
+  procedure executerTache(ref int nbPtsDansCercle)
+  {
+      while(obtenirTache()) {
+          traitementThread(tailleTache, nbPtsDansCercle);
+      }
+  }
+
   proc calculPST( nbPoints) returns r
-  { 
+  {
+     int nbPtsDansCercle = 0;
+      
+     initSacDeTaches(nbPoints);
+
+     co[i = 1 to getNbProcs()]
+         executerTache(nbPtsDansCercle);
+     oc
+
+     r = calculPI(nbPtsDansCercle, nbPoints);
   }
 end

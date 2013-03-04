@@ -1,0 +1,21 @@
+resource Tests3()
+    import MPDUnit
+    import Pi
+    
+    procedure test_calculPST()
+    {
+        nommerCasDeTest("test_calculPST");
+        
+        real piApprox = calculPST(NB_POINTS);
+
+        assertRealEquals(PI, piApprox, PRECISION);
+    }
+
+    SuiteDeTests suite1 
+        = mkSuiteDeTests("Ops de base", 
+                         noop, 
+                         ([1] test_calculPST), 
+                         noop);
+
+  executerSuitesDeTests( ([1] suite1) );
+end
