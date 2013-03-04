@@ -1,7 +1,7 @@
 #	Makefile created by MPDM
 # 	Modifie ensuite manuellement par Guy Tremblay.
 
-TT=8
+TT=100
 N=2048
 
 # Variables globales
@@ -40,25 +40,25 @@ tst3: tst3.out
 	./tst3.out
 
 mesures: mesurer-temps
-	./mesurer-temps 10000 5 $(TT) "11111"
-	./mesurer-temps 30000 5 $(TT) "11111"
-	./mesurer-temps 100000 5 $(TT) "11111"
-	./mesurer-temps 200000 5 $(TT) "11111"
-	./mesurer-temps 500000 5 $(TT) "11111"
+	./mesurer-temps 10000 5 $(TT) "1111"
+	./mesurer-temps 30000 5 $(TT) "1111"
+	./mesurer-temps 100000 5 $(TT) "1011"
+	./mesurer-temps 200000 5 $(TT) "1011"
+	./mesurer-temps 500000 5 $(TT) "1011"
 
 mesures-vites: mesurer-temps
-	./mesurer-temps 10000 4 $(TT) "11111"
-	./mesurer-temps 30000 4 $(TT) "10111"
-	./mesurer-temps 100000 4 $(TT) "10111"
-	./mesurer-temps 200000 4 $(TT) "10111"
-	./mesurer-temps 500000 4 $(TT) "10111"
+	./mesurer-temps 10000 4 $(TT) "1111"
+	./mesurer-temps 30000 4 $(TT) "1111"
+	./mesurer-temps 100000 4 $(TT) "1011"
+	./mesurer-temps 200000 4 $(TT) "1011"
+	./mesurer-temps 500000 4 $(TT) "1011"
 
 mesures0: mesurer-temps
-	./mesurer-temps 5000 4 $(TT) "11111"
-	./mesurer-temps 15000 4 $(TT) "11111"
-	./mesurer-temps 50000 4 $(TT) "11111"
-	./mesurer-temps 100000 4 $(TT) "11111"
-	./mesurer-temps 250000 4 $(TT) "11111"
+	./mesurer-temps 5000 4 $(TT) "1111"
+	./mesurer-temps 15000 4 $(TT) "1111"
+	./mesurer-temps 50000 4 $(TT) "1011"
+	./mesurer-temps 100000 4 $(TT) "1011"
+	./mesurer-temps 250000 4 $(TT) "1011"
 
 
 tst00.out: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/Tests00.o
