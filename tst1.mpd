@@ -1,0 +1,25 @@
+resource Tests1()
+    import MPDUnit
+    import Pi
+    
+    procedure test_calculPIF()
+    {
+        nommerCasDeTest("test_calculPIF");
+        
+        # Test très indulgent sur la précision :
+        # notre implémentation en granularité fine ne
+        # permet pas de tirer un grand nombre de points
+
+        real piApprox = calculPIF(NB_POINTS / 10);
+
+        assertRealEquals(PI, piApprox, PRECISION * 10);
+    }
+
+    SuiteDeTests suite1 
+        = mkSuiteDeTests("Ops de base", 
+                         noop, 
+                         ([1] test_calculPIF), 
+                         noop);
+
+  executerSuitesDeTests( ([1] suite1) );
+end

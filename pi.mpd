@@ -36,4 +36,12 @@ global Pi
   # POSTCONDITION
   #   Indique la taille des taches pour l'operation calculPST.
 
+  ##################################################################
+  # Constantes utilisées pour les tests.
+  ##################################################################
+
+  const real PRECISION = 0.01;
+  const real PI = 3.1415926535;
+  const int  NB_POINTS = 100000;
+
 body Pi separate

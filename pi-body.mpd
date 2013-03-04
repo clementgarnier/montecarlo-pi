@@ -4,7 +4,7 @@ body Pi
 
   bool DEBUG = false;       # Pour trace de debogage
   #DEBUG = true;  
- 
+
   ##################################################################
   # Variables et operations pour la manipulation du sac de taches.
   ##################################################################
@@ -64,25 +64,26 @@ body Pi
      # Création des points et vérfication de position
      for [i = 1 to nbPoints] {
         Point p = initialiserPoint();
-	if (estDansCercle(p)) {
-	   nbPtsDansCercle++;
+	    if (estDansCercle(p)) 
+        {
+	        nbPtsDansCercle++;
         }	      
      }  
      
      # Calcul de PI
-     r = 4*nbPtsDansCercle/nbPoints;        
+     r = 4*(real(nbPtsDansCercle)/nbPoints);        
   }
 
   ##################################################
   # Version parallele iterative granularite fine.
   ##################################################
   
-  procedure traiterPoint(int listeNbPoints[*], int i) 
+  procedure traiterPoint(ref int listeNbPoints[*], int i) 
   {
      Point p = initialiserPoint();
      if (estDansCercle(p))
      {
-	listeNbPoints[i] = 1;
+        listeNbPoints[i] = 1;
      }
   }
 
@@ -90,7 +91,7 @@ body Pi
   {
      int listeNbPoints[nbPoints] = ([nbPoints] 0);
      int nbPtsDansCercle = 0;
-
+    
      # Création des points et vérfication de position
      co [i = 1 to nbPoints]
         traiterPoint(listeNbPoints, i);	      
@@ -99,12 +100,12 @@ body Pi
      for [j = 1 to nbPoints] {
         if (listeNbPoints[j] > 0)
         {
-           nbPtsDansCercle += listeNbPoints[j]
+           nbPtsDansCercle += listeNbPoints[j];
         }
      }
      
      # Calcul de PI
-     r = 4*nbPtsDansCercle/nbPoints; 
+     r = 4*(real(nbPtsDansCercle)/nbPoints); 
   }
 
 
