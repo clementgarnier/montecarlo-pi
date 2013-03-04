@@ -1,0 +1,21 @@
+resource Tests2()
+    import MPDUnit
+    import Pi
+    
+    procedure test_calculPIGA()
+    {
+        nommerCasDeTest("test_calculPIGA");
+
+        real piApprox = calculPIGA(NB_POINTS);
+
+        assertRealEquals(PI, piApprox, PRECISION);
+    }
+
+    SuiteDeTests suite2 
+        = mkSuiteDeTests("Ops de base", 
+                         noop, 
+                         ([1] test_calculPIGA), 
+                         noop);
+
+  executerSuitesDeTests( ([1] suite2) );
+end

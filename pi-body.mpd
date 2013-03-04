@@ -1,6 +1,7 @@
 body Pi
 
-  import Geometrie;
+  import Geometrie;  
+  import Barriere;
 
   bool DEBUG = false;       # Pour trace de debogage
   #DEBUG = true;  
@@ -49,8 +50,13 @@ body Pi
   {
      nbProcs = 1;
      if (getenv("MPD_PARALLEL") != "") {
-      nbProcs = int(getenv("MPD_PARALLEL"));
+       nbProcs = int(getenv("MPD_PARALLEL"));
     }
+  }
+
+  procedure calculPI(int nbPtsDansCercle, int nbPoints) returns real r
+  {
+    r = 4*(real(nbPtsDansCercle)/nbPoints);
   }
 
   ##################################################
@@ -71,14 +77,14 @@ body Pi
      }  
      
      # Calcul de PI
-     r = 4*(real(nbPtsDansCercle)/nbPoints);        
+     r = calculPI(nbPtsDansCercle, nbPoints);        
   }
 
   ##################################################
   # Version parallele iterative granularite fine.
   ##################################################
-  
-  procedure traiterPoint(ref int listeNbPoints[*], int i) 
+   
+  procedure traiterPointFin(ref int listeNbPoints[*], int i) 
   {
      Point p = initialiserPoint();
      if (estDansCercle(p))
@@ -94,7 +100,7 @@ body Pi
     
      # Création des points et vérfication de position
      co [i = 1 to nbPoints]
-        traiterPoint(listeNbPoints, i);	      
+        traiterPointFin(listeNbPoints, i);	      
      oc  
 
      for [j = 1 to nbPoints] {
@@ -105,7 +111,7 @@ body Pi
      }
      
      # Calcul de PI
-     r = 4*(real(nbPtsDansCercle)/nbPoints); 
+     r = calculPI(nbPtsDansCercle, nbPoints); 
   }
 
 
@@ -113,16 +119,41 @@ body Pi
   # Version parallele iterative granularite grossiere.
   ##################################################
 
-  proc calculPIGA( nbPoints) returns pi
+  #cap Barriere barriere;
+  sem totLibre = 1;   # Semaphore protegeant l'acces à nbPointsDansCercle
+
+  procedure traiterPointGros() returns bool estInclus 
   {
+     Point p = initialiserPoint();
+     estInclus = estDansCercle(p);
   }
 
-  ##################################################
-  # Version parallele iterative granularite grossiere, distribution cyclique.
-  ##################################################
-
-  proc calculPIGC( nbPoints) returns pi
+  procedure traitementThread(int nbPointsThread, ref int nbPointsDansCercle)
   {
+     int nbPtsThreadInclus = 0;
+     for [j = 1 to nbPointsThread]
+     {
+        if (traiterPointGros())
+        {
+           nbPtsThreadInclus += 1;
+        }
+     }
+     #barriere.attendre();
+     P(totLibre); nbPointsDansCercle += nbPtsThreadInclus; V(totLibre);
+  }
+
+  proc calculPIGA( nbPoints ) returns r
+  {
+     int nbPtsDansCercle = 0;
+     int nbProcs = getNbProcs();
+
+     # Création des points et vérfication de position
+     co [i = 1 to nbProcs]
+        traitementThread(nbPoints/nbProcs, nbPtsDansCercle);	      
+     oc  
+     
+     # Calcul de PI
+     r = calculPI(nbPtsDansCercle, nbPoints);  
   }
 
   ##################################################
