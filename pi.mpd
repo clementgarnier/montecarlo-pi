@@ -28,4 +28,12 @@ global Pi
   # CONTRAINTE
   #   Algorithme avec parallelisme de style sac de taches.
 
+  #####################################################
+  # Operation auxiliaire pour parametre d'execution.
+  #####################################################
+
+  op definirTailleTache( int tt )
+  # POSTCONDITION
+  #   Indique la taille des taches pour l'operation calculPST.
+
 body Pi separate

@@ -1,4 +1,4 @@
-body Reels
+body Pi
 
   import Geometrie;
 
@@ -56,15 +56,55 @@ body Reels
   ##################################################
   # Version sequentielle.
   ##################################################
-  proc calculS(int nbPoints) returns pi
-  {
+
+  proc calculS( nbPoints ) returns r
+  {  
+     int nbPtsDansCercle = 0;
+
+     # Création des points et vérfication de position
+     for [i = 1 to nbPoints] {
+        Point p = initialiserPoint();
+	if (estDansCercle(p)) {
+	   nbPtsDansCercle++;
+        }	      
+     }  
+     
+     # Calcul de PI
+     r = 4*nbPtsDansCercle/nbPoints;        
   }
 
   ##################################################
   # Version parallele iterative granularite fine.
   ##################################################
-  proc calculPIF(int nbPoints) returns pi
+  
+  procedure traiterPoint(int listeNbPoints[*], int i) 
   {
+     Point p = initialiserPoint();
+     if (estDansCercle(p))
+     {
+	listeNbPoints[i] = 1;
+     }
+  }
+
+  proc calculPIF( nbPoints ) returns r
+  {
+     int listeNbPoints[nbPoints] = ([nbPoints] 0);
+     int nbPtsDansCercle = 0;
+
+     # Création des points et vérfication de position
+     co [i = 1 to nbPoints]
+        traiterPoint(listeNbPoints, i);	      
+     oc  
+
+     for [j = 1 to nbPoints] {
+        if (listeNbPoints[j] > 0)
+        {
+           nbPtsDansCercle += listeNbPoints[j]
+        }
+     }
+     
+     # Calcul de PI
+     r = 4*nbPtsDansCercle/nbPoints; 
   }
 
 
@@ -72,7 +112,7 @@ body Reels
   # Version parallele iterative granularite grossiere.
   ##################################################
 
-  proc calculPIGA(int nbPoints) returns pi
+  proc calculPIGA( nbPoints) returns pi
   {
   }
 
@@ -80,7 +120,7 @@ body Reels
   # Version parallele iterative granularite grossiere, distribution cyclique.
   ##################################################
 
-  proc calculPIGC(int nbPoints) returns pi
+  proc calculPIGC( nbPoints) returns pi
   {
   }
 
@@ -88,7 +128,7 @@ body Reels
   # Version parallele sac de taches.
   ##################################################
 
-  proc calculPST(int nbPoints) returns r
+  proc calculPST( nbPoints) returns r
   { 
   }
 end

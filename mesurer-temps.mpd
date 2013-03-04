@@ -1,6 +1,6 @@
 resource MesurerTemps()
   import MPDUnit
-  import Geometrie
+  import Pi
 
   const int NB_VERSIONS = 5;
   const int NB_CARS = 32;
@@ -33,7 +33,7 @@ resource MesurerTemps()
   }
 
   int nbPoints; getarg(1, nbPoints);
-  if (nbPoints:wq <= 0) {
+  if (nbPoints <= 0) {
     write( "*** Erreur : nbPoints <= 0" );
     stop(1);
   }
@@ -80,19 +80,19 @@ resource MesurerTemps()
   }
 
   procedure mS() 
-  { real pi  = multiplierS(nbPoints); }
+  { real pi  = calculS(nbPoints); }
 
   procedure mPIF() 
-  { real pi = multiplierPIF(nbPoints); }
+  { real pi = calculPIF(nbPoints); }
 
   procedure mPIGA() 
-  { real pi = multiplierPIGA(nbPoints); }
+  { real pi = calculPIGA(nbPoints); }
 
   procedure mPIGC() 
-  { real pi = multiplierPIGC(nbPoints); }
+  { real pi = calculPIGC(nbPoints); }
 
   procedure mPST() 
-  { real pi = multiplierPST(nbPoints); }
+  { real pi = calculPST(nbPoints); }
 
   cap Proc versions[NB_VERSIONS] = (mS, mPIF, mPIGA, mPIGC, mPST);
 
