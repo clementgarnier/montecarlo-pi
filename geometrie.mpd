@@ -16,6 +16,6 @@ global Geometrie
 
     op estDansCercle(Point p) returns bool b 
 
-    op initialisePoint(ref Point p)
+    op initialiserPoint() returns Point p
 
 body Geometrie separate

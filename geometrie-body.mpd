@@ -12,11 +12,11 @@ body Geometrie
      b = (p^.x**2 + p^.y**2 <= 1);
   }
 
-  proc initialisePoint(p)
+  proc initialiserPoint() returns p
   {
-   # random x [0,1]
-   # random y [0,1]
-   # Assigner x et y à p
+      p = new(PointRec);
+      p^.x = random();
+      p^.y = random();
   }
 
 end
