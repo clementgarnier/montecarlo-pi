@@ -1,0 +1,377 @@
+body Reels
+
+  import OpsAuxiliaires;
+
+  bool DEBUG = false;       # Pour trace de debogage
+  #DEBUG = true;  
+ 
+  ##################################################
+  # Operations liees a la normalisation.
+  ##################################################
+
+  proc estNormalise( r ) returns ok
+  {
+    if ( r == N_A_N ) { ok = true; return; }
+
+    ok = false; # Jusqu'a preuve du contraire.
+
+    int n = nbChiffres(r);
+    for [i = 1 to n] {
+      if ( r^.chiffres^[i] < 0 | r^.chiffres^[i] > 9 ) {
+        return;
+      }
+    }
+    # Ne doit debuter ou terminer par 0 que s'il n'y a qu'un seul chiffre
+    # et que le nombre represente 0 (chiffre 0 + exposant nul).
+    if ( n > 1  & (r^.chiffres^[1] == 0 | r^.chiffres^[n] == 0) ) {
+      return;
+    }
+    if ( n == 1  & r^.chiffres^[n] == 0 & r^.exposant != 0 ) {
+      return;
+    }
+    ok = true;
+  }
+
+
+  proc normaliser( r0 ) returns r
+  {
+    if ( r0 == N_A_N | estNormalise(r0) ) { r = r0; return; }
+
+    if (DEBUG) {
+      printf( "normaliser(" ); 
+      imprimer( r0 );
+      printf( ") => " );
+    }
+
+    r = new(ReelRec);
+    # Meme exposant, jusqu'a preuve du contraire.
+    r^.exposant = r0^.exposant;
+
+    # On determine le nombre de chiffres requis. 
+    int n = nbChiffres(r0);
+    int nb = 0;
+    int retenue = 0;
+    for [i = n downto 1] {
+      int v = r0^.chiffres^[i] + retenue;
+      retenue = v / 10;
+      nb += 1;
+    }
+    while ( retenue > 0 ) {
+      nb += 1;
+      retenue /= 10
+    }
+    if (DEBUG) {
+      printf( " {avec %d elements} ", nb );
+    }
+
+    # On cree le reel avec le bon nombre de chiffres.
+    r^.chiffres = new([nb] int);
+    retenue = 0;
+    int k = n;
+    for [i = nb downto 1] { 
+      int v;
+      if (k >= 1) {
+        v = r0^.chiffres^[k] + retenue;
+      } else {
+        v = retenue;
+        if ( v > 0 ) {
+          r^.exposant += 1;
+        }
+      }
+      r^.chiffres^[i] = v % 10;
+      retenue = v / 10;
+      k -= 1;
+    }
+
+
+    # On s'assure que le dernier chiffre n'est pas 0, sauf si c'est 0.
+    int dernierNonZero = nb;
+    while (dernierNonZero >= 1 & r^.chiffres^[dernierNonZero] == 0 ) {
+      dernierNonZero -= 1;
+    }
+    dernierNonZero = max(1, dernierNonZero);
+    if (dernierNonZero < nb) {
+      # Il y avait des 0 en trop. On cree un nouveau Reel normalise.
+      Reel r2 = new(ReelRec);
+      r2^.chiffres = new([dernierNonZero] int);
+      r2^.chiffres^ = r^.chiffres^[1:dernierNonZero];
+      free( r^.chiffres );
+      r^.chiffres = r2^.chiffres;
+      free(r2);
+    }
+
+    # On s'assure que les premiers chiffres ne sont pas 0, sauf si c'est 0.
+    int premierNonZero = 1;
+    while (premierNonZero <= nbChiffres(r) & r^.chiffres^[premierNonZero] == 0 ) {
+      premierNonZero += 1;
+    }
+    premierNonZero = min(premierNonZero, nbChiffres(r));
+    if (premierNonZero > 1) {
+      # Il y avait des 0 en trop. On cree un nouveau Reel normalise.
+      Reel r2 = new(ReelRec);
+      r2^.chiffres = new([nbChiffres(r) - premierNonZero + 1] int);
+      r2^.chiffres^ = r^.chiffres^[premierNonZero:nbChiffres(r)];
+      free( r^.chiffres );
+      r^.chiffres = r2^.chiffres;
+      r^.exposant -= premierNonZero - 1;
+      free(r2);
+    }
+
+    if ( nbChiffres(r) == 1 & r^.chiffres^[1] == 0 ) {
+      r^.exposant = 0;
+    }
+
+    # On modifie aussi la valeur recue : effet de bord pour optimisation.
+    free(r0^.chiffres);
+    r0^.chiffres = r^.chiffres;
+    r0^.exposant = r^.exposant;
+
+    if (DEBUG) {
+      imprimer( r );
+      printf( ")\n" );
+    }
+  }
+
+
+ ##################################################
+  # Operations de conversion: en chaine et en real.
+  ##################################################
+  proc toString( r, s )
+  {
+     if (DEBUG) {
+       printf( "toString( " );
+       imprimer( r );
+       printf( " ) => " );
+     }
+  
+     if ( r == N_A_N ) { s = "NaN"; return; }
+
+     normaliser( r );
+
+     # On determine le nombre de chiffres decimaux requis pour representer le reel.
+     int nbChifs = nbChiffres(r);
+     int nbChiffresExposant;
+     if ( r^.exposant == 0 ) {
+        nbChiffresExposant = 1;
+     } else {
+        nbChiffresExposant = int(ceil(log(abs(r^.exposant), 10)));
+        if ( estPuissance(abs(r^.exposant), 10) ) {
+           nbChiffresExposant += 1;
+        }
+     }
+     assert( nbChiffresExposant > 0, "nbChiffresExposant doit etre > 0" );
+     # Pour le '0' initial et le '.', et ensuite le 'E' et le signe.
+     int nbCars = nbChifs + nbChiffresExposant + 2 + 2; 
+     assert( nbCars <= maxlength(s), "Chaine s trop petite dans toString !?" );
+     char cars[nbCars];
+     int pos = 0;
+     cars[++pos] = '0';
+     cars[++pos] = '.';
+
+     # On identifie chacun des chiffres.
+     for [i = 1 to nbChifs] {
+       cars[++pos] = char(int('0') + r^.chiffres^[i]);
+     }
+     cars[++pos] = 'E';
+     if ( r^.exposant >= 0 ) {
+       cars[++pos] = '+';
+     } else {
+       cars[++pos] = '-';
+     }
+     string[nbChiffresExposant] exposant;
+     sprintf( exposant, "%d", abs(r^.exposant) );
+     for [i = 1 to nbChiffresExposant] {
+       cars[++pos] = exposant[i];
+     }
+     s = string( cars[1:nbCars] );
+
+     if (DEBUG) {
+       printf( "%s\n", s );
+     }
+  }
+
+
+  proc toStringN( e ) returns s
+  {   
+    toString( e, s );
+  }
+
+
+
+  ##################################################################
+  # Variables et operations pour la manipulation du sac de taches.
+  ##################################################################
+
+  sem mutex = 1;
+
+  procedure FA( ref int x, int incr ) returns int r
+  {
+    P( mutex );
+    r = x;
+    x += incr;
+    V( mutex )
+  }
+
+  int tailleTache = 10;
+
+  proc definirTailleTache( tt )
+  { tailleTache = tt; }
+
+  # Variables pour representer le sac de taches.
+  int suivant, borneSup;
+
+  # Initialisation du sac de taches.
+  procedure initSacDeTaches( int bi, int bs )
+  { suivant = bi; borneSup = bs;  }
+
+  # Retrait d'une tache du sac.
+  procedure obtenirTache( res int i, res int j ) returns bool disponible 
+  {
+    i = FA( suivant, tailleTache );
+    j = min( i + tailleTache - 1, borneSup );
+    disponible = (i <= borneSup);
+  }
+
+  ##################################################
+  # Autres operations auxiliaires.
+  ##################################################
+
+  external getenv(string[*]) returns string[2];
+
+  procedure getNbProcs() returns int nbProcs
+  {
+     nbProcs = 1;
+     if (getenv("MPD_PARALLEL") != "") {
+      nbProcs = int(getenv("MPD_PARALLEL"));
+    }
+  }
+
+  procedure coefficient( Reel r1, Reel r2, int k ) returns int c
+  {
+    c = 0;
+    for [i = 1 to nbChiffres(r1), j = 1 to nbChiffres(r2) st k == i+j-1] {
+      c += r1^.chiffres^[i] * r2^.chiffres^[j];
+    }
+  }
+
+  ##################################################
+  # Version sequentielle.
+  ##################################################
+  proc calculS( r1, r2 ) returns r
+  {
+     if ( r1 == N_A_N | r2 == N_A_N ) { 
+       r = N_A_N; 
+       return; 
+     }
+
+
+     int n = nbChiffres(r1)+nbChiffres(r2)-1;
+
+     r = allouerReel( n );
+     r^.exposant = r1^.exposant + r2^.exposant - 1
+
+     for [k = 1 to n] {
+       r^.chiffres^[k] = coefficient(r1, r2, k);       
+     }     
+  }
+
+  ##################################################
+  # Version parallele iterative granularite fine.
+  ##################################################
+  proc calculPIF( r1, r2 ) returns r
+  {
+     if ( r1 == N_A_N | r2 == N_A_N ) { 
+       r = N_A_N; 
+       return; 
+     }
+
+     int n = nbChiffres(r1)+nbChiffres(r2)-1;
+
+     r = allouerReel( n );
+     r^.exposant = r1^.exposant + r2^.exposant - 1
+
+     int k;
+     co [k = 1 to n]
+       r^.chiffres^[k] = coefficient(r1, r2, k);       
+     oc
+
+  }
+
+
+  ##################################################
+  # Version parallele iterative granularite grossiere.
+  ##################################################
+
+  proc calculPIGA( r1, r2 ) returns r
+  {
+     if ( r1 == N_A_N | r2 == N_A_N ) { 
+       r = N_A_N;    
+       return;
+     }
+
+     int n = nbChiffres(r1)+nbChiffres(r2)-1;
+     int nbProcs = getNbProcs();
+
+     r = allouerReel( n );
+     r^.exposant = r1^.exposant + r2^.exposant - 1
+
+     int k;
+     co [k = 1 to nbProcs]
+       coefficient_PIGA(r1, r2, k, n, nbProcs, r);       
+     oc
+  }
+
+  ##################################################
+  # Version parallele iterative granularite grossiere, distribution cyclique.
+  ##################################################
+
+  proc calculPIGC( r1, r2 ) returns r
+  {
+     if ( r1 == N_A_N | r2 == N_A_N ) { 
+       r = N_A_N; 
+       return; 
+     }
+
+     int n = nbChiffres(r1)+nbChiffres(r2)-1;
+     int nbProcs = getNbProcs();
+
+     r = allouerReel( n );
+     r^.exposant = r1^.exposant + r2^.exposant - 1
+
+     int k;
+     co [k = 1 to nbProcs]
+       coefficient_PIGC(r1, r2, k, n, nbProcs, r);       
+     oc
+  }
+
+
+
+  ##################################################
+  # Version parallele sac de taches.
+  ##################################################
+
+  proc calculPST( r1, r2 ) returns r
+  { 
+    if ( r1 == N_A_N | r2 == N_A_N ) { 
+      r = N_A_N; 
+      return; 
+    }
+
+    r = N_A_N;
+
+
+    int n = nbChiffres(r1)+nbChiffres(r2)-1;
+    int nbProcs = getNbProcs();
+
+    r = allouerReel( n );
+    r^.exposant = r1^.exposant + r2^.exposant - 1
+
+    int bi = 0, bs = n;
+    initSacDeTaches(bi, bs);
+
+    int k;
+    co [k = 1 to nbProcs]
+      coefficient_PST(r1, r2, k, n, nbProcs, r);       
+    oc
+  }
+end
