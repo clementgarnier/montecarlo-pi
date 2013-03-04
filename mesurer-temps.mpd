@@ -2,7 +2,7 @@ resource MesurerTemps()
   import MPDUnit
   import Pi
 
-  const int NB_VERSIONS = 5;
+  const int NB_VERSIONS = 4;
   const int NB_CARS = 32;
   type NomVersion = string[NB_CARS];
   NomVersion nomVersionSequentielle;
@@ -27,8 +27,8 @@ resource MesurerTemps()
     write( "     - nbRepetitions: nombre de repetitions d'execution" );
     write( "     - tailleTache: taille pour tache version sac de taches" );
     write( "     - versionsAExecuter: versions a executer (chaines de cars)" );
-    write( "       num. car => version: 1 => S; 2 => PIF, 3 => PIGA, 4 => PIGC, 5 => PST" );
-    write( "       Exemple: \"10011\" execute les versions S, PIGC et PST" );
+    write( "       num. car => version: 1 => S; 2 => PIF, 3 => PIGA, 4  => PST" );
+    write( "       Exemple: \"1001\" execute les versions S et PST" );
     stop(1);
   }
 
@@ -88,13 +88,10 @@ resource MesurerTemps()
   procedure mPIGA() 
   { real pi = calculPIGA(nbPoints); }
 
-  procedure mPIGC() 
-  { real pi = calculPIGC(nbPoints); }
-
   procedure mPST() 
   { real pi = calculPST(nbPoints); }
 
-  cap Proc versions[NB_VERSIONS] = (mS, mPIF, mPIGA, mPIGC, mPST);
+  cap Proc versions[NB_VERSIONS] = (mS, mPIF, mPIGA, mPST);
 
 
   # Les noms des versions qui peuvent etre executees.
@@ -103,8 +100,7 @@ resource MesurerTemps()
   nomVersionSequentielle = nomVersion[1];
   nomVersion[2] = "calculPIF";
   nomVersion[3] = "calculPIGA";
-  nomVersion[4] = "calculPIGC";
-  nomVersion[5] = "calculPST";
+  nomVersion[4] = "calculPST";
 
  
   # Impression de l'en-tete.

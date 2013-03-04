@@ -14,7 +14,7 @@ MPDLFLAGS = -w
 
 # Tests pour verifier que le module Pi fonctionne correctement.
 
-TESTS_EXEC = tst00.out tst0.out tst1.out tst2.out tst3.out tst4.out tst5.out tst6.out
+TESTS_EXEC = tst00.out tst0.out tst1.out tst2.out tst3.out
 
 compile: $(TESTS_EXEC)
 
@@ -23,10 +23,6 @@ tsts tests: $(TESTS_EXEC)
 	./tst1.out
 	./tst2.out
 	./tst3.out
-	./tst4.out
-	./tst5.out
-	./tst6.out
-
 
 tst00: tst00.out
 	./tst00.out
@@ -42,15 +38,6 @@ tst2: tst2.out
 
 tst3: tst3.out
 	./tst3.out
-
-tst4: tst4.out
-	./tst4.out
-
-tst5: tst5.out
-	./tst5.out
-
-tst6: tst6.out
-	./tst6.out
 
 mesures: mesurer-temps
 	./mesurer-temps 10000 5 $(TT) "11111"
@@ -88,15 +75,6 @@ tst2.out: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/Tests2.o
 
 tst3.out: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/Tests3.o
 	mpdl $(MPDLFLAGS)  -o tst3.out Geometrie MPDUnit Pi Tests3
-
-tst4.out: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/Tests4.o
-	mpdl $(MPDLFLAGS)  -o tst4.out Geometrie MPDUnit Pi Tests4
-
-tst5.out: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/Tests5.o
-	mpdl $(MPDLFLAGS)  -o tst5.out Geometrie MPDUnit Pi Tests5
-
-tst6.out: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/Tests6.o
-	mpdl $(MPDLFLAGS)  -o tst6.out Geometrie MPDUnit Pi Tests6
 
 # Programme pour comparer le temps d'execution des differents facon de multiplier.
 mesurer-temps: $I/Geometrie.o $I/Barriere.o $I/MPDUnit.o $I/Pi.o $I/MesurerTemps.o
@@ -178,33 +156,9 @@ $I/Tests3.o: $I/Tests3.spec $I/Pi.spec\
 $I/Tests3.spec: tst3.mpd
 	$(MPD) $(MPDFLAGS) -s tst3.mpd
 
-$I/Tests4.o: $I/Tests4.spec $I/Pi.spec\
- $I/Pi.o $I/MPDUnit.spec $I/MPDUnit.o $I/Geometrie.spec\
- $I/Geometrie.o $I/Barriere.spec $I/Barriere.o tst4.mpd
-	$(MPD) $(MPDFLAGS) -b tst4.mpd
-
-$I/Tests4.spec: tst4.mpd
-	$(MPD) $(MPDFLAGS) -s tst4.mpd
-
-$I/Tests5.o: $I/Tests5.spec $I/Pi.spec\
- $I/Pi.o $I/MPDUnit.spec $I/MPDUnit.o $I/Geometrie.spec\
- $I/Geometrie.o $I/Barriere.spec $I/Barriere.o tst5.mpd
-	$(MPD) $(MPDFLAGS) -b tst5.mpd
-
-$I/Tests5.spec: tst5.mpd
-	$(MPD) $(MPDFLAGS) -s tst5.mpd
-
-$I/Tests6.o: $I/Tests6.spec $I/Pi.spec\
- $I/Pi.o $I/MPDUnit.spec $I/MPDUnit.o $I/Geometrie.spec\
- $I/Geometrie.o $I/Barriere.spec $I/Barriere.o tst6.mpd
-	$(MPD) $(MPDFLAGS) -b tst6.mpd
-
-$I/Tests6.spec: tst6.mpd
-	$(MPD) $(MPDFLAGS) -s tst6.mpd
-
 clean:
 	rm -rf $I 
-	rm -f core a.out tst00.out tst0.out tst1.out tst2.out tst3.out tst4.out tst5.out tst6.out mesurer-temps
+	rm -f core a.out tst00.out tst0.out tst1.out tst2.out tst3.out mesurer-temps
 	\rm -f *~
 
 cleanxtra:

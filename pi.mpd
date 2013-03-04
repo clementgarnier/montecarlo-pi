@@ -19,11 +19,6 @@ global Pi
   #   Algorithme avec parallelisme iteratif a granularite grossiere (sans recursion),
   #   avec distribution par tranche d'elements adjacents.
 
-  op calculPIGC(int nbPoints) returns real pi
-  # CONTRAINTE
-  #   Algorithme avec parallelisme iteratif a granularite grossiere (sans recursion),
-  #   avec distribution cyclique des elements.
-
   op calculPST(int nbPoints) returns real pi
   # CONTRAINTE
   #   Algorithme avec parallelisme de style sac de taches.
