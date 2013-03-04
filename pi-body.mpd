@@ -73,11 +73,11 @@ body Pi
      # Création des points et vérfication de position
      for [i = 1 to nbPoints] {
         Point p = initialiserPoint();
-	    if (estDansCercle(p)) 
-        {
+	    if (estDansCercle(p)) {
 	        nbPtsDansCercle++;
-        }	      
-     }  
+        }	     
+        free(p);
+     }
      
      # Calcul de PI
      r = calculPI(nbPtsDansCercle, nbPoints);        
@@ -90,10 +90,10 @@ body Pi
   procedure traiterPointFin(ref int listeNbPoints[*], int i) 
   {
      Point p = initialiserPoint();
-     if (estDansCercle(p))
-     {
+     if (estDansCercle(p)) {
         listeNbPoints[i] = 1;
      }
+     free(p);
   }
 
   proc calculPIF( nbPoints ) returns r
@@ -129,6 +129,7 @@ body Pi
   {
      Point p = initialiserPoint();
      estInclus = estDansCercle(p);
+     free(p);
   }
 
   procedure traitementThread(int nbPointsThread, ref int nbPointsDansCercle)
@@ -138,7 +139,7 @@ body Pi
      {
         if (traiterPointGros())
         {
-           nbPtsThreadInclus += 1;
+           nbPtsThreadInclus++;
         }
      }
      #barriere.attendre();
