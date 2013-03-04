@@ -1,0 +1,145 @@
+resource MesurerTemps()
+  import MPDUnit
+  import Geometrie
+
+  const int NB_VERSIONS = 5;
+  const int NB_CARS = 32;
+  type NomVersion = string[NB_CARS];
+  NomVersion nomVersionSequentielle;
+
+  optype Proc = ();
+
+  external getenv(string[*]) returns string[4];
+
+  # On determine le nombre de threads a utiliser en fonction de MPD_PARALLEL.
+  int nbProcs = 0;
+  if (getenv("MPD_PARALLEL") != "") {
+    nbProcs = int(getenv("MPD_PARALLEL"));
+  } else {
+    nbProcs = 1; 
+  }
+
+  # On definit et verifie les divers arguments.
+  if ( numargs() < 4 ) {
+    write( "usage:" );
+    write( "   mesurer-temps nbPoints nbRepetitions versionsAExecuter" );
+    write( "     - nbPoints: nombre de points à générer" );
+    write( "     - nbRepetitions: nombre de repetitions d'execution" );
+    write( "     - tailleTache: taille pour tache version sac de taches" );
+    write( "     - versionsAExecuter: versions a executer (chaines de cars)" );
+    write( "       num. car => version: 1 => S; 2 => PIF, 3 => PIGA, 4 => PIGC, 5 => PST" );
+    write( "       Exemple: \"10011\" execute les versions S, PIGC et PST" );
+    stop(1);
+  }
+
+  int nbPoints; getarg(1, nbPoints);
+  if (nbPoints:wq <= 0) {
+    write( "*** Erreur : nbPoints <= 0" );
+    stop(1);
+  }
+
+  int nbRepetitions; getarg(2, nbRepetitions);
+  if (nbRepetitions <= 0) {
+    write( "*** Erreur : nbIterations <= 0" );
+    stop(1);
+  }
+
+  int tailleTache;
+  getarg( 3, tailleTache );
+  
+  definirTailleTache( tailleTache );
+  
+  string[NB_VERSIONS] versionsAExecuter;
+  getarg( 4, versionsAExecuter );
+
+  #
+  # Execution, puis cumul des moyennes.
+  #
+  int tempsSeq = 0; # Point de reference pour acceleration.
+
+  procedure executerEtMesurer( NomVersion nomProc, cap Proc p, int nbRepetitions, 
+                               var int nbCalcules, ref string[*] noms[*], ref int moyennes[*] )
+  {
+    int total = 0;
+    printf( "  %-15s : ", nomProc );
+    for [i = 1 to nbRepetitions] {
+      int debut = age();
+      p();
+      int temps = age() - debut;
+      printf( "%5d ", temps );
+      total += temps;
+    }
+    printf( " => %d\n", total / nbRepetitions );
+
+    nbCalcules += 1;
+    noms[nbCalcules] = nomProc;
+    moyennes[nbCalcules] = total / nbRepetitions;
+    if ( nomProc == nomVersionSequentielle ) {
+      tempsSeq = total / nbRepetitions;
+    }
+  }
+
+  procedure mS() 
+  { real pi  = multiplierS(nbPoints); }
+
+  procedure mPIF() 
+  { real pi = multiplierPIF(nbPoints); }
+
+  procedure mPIGA() 
+  { real pi = multiplierPIGA(nbPoints); }
+
+  procedure mPIGC() 
+  { real pi = multiplierPIGC(nbPoints); }
+
+  procedure mPST() 
+  { real pi = multiplierPST(nbPoints); }
+
+  cap Proc versions[NB_VERSIONS] = (mS, mPIF, mPIGA, mPIGC, mPST);
+
+
+  # Les noms des versions qui peuvent etre executees.
+  NomVersion nomVersion[NB_VERSIONS];
+  nomVersion[1] = "calculS";
+  nomVersionSequentielle = nomVersion[1];
+  nomVersion[2] = "calculPIF";
+  nomVersion[3] = "calculPIGA";
+  nomVersion[4] = "calculPIGC";
+  nomVersion[5] = "calculPST";
+
+ 
+  # Impression de l'en-tete.
+  printf( "*** Temps d'execution (en ms) pour %d processeur", nbProcs );
+  if (nbProcs > 1) { printf( "s"); }
+  printf( " (tailleTache = %d)", tailleTache );
+  printf( ":\n" );
+
+  NomVersion modes[NB_VERSIONS];
+  int moyennes[NB_VERSIONS];
+  int nbCalcules = 0;
+
+  for [i = 1 to NB_VERSIONS] {
+    if (versionsAExecuter[i] == '1') {
+      executerEtMesurer( nomVersion[i], versions[i], nbRepetitions, nbCalcules, modes, moyennes );
+    }
+  }
+
+  #
+  # On imprime les moyennes.
+  #
+  printf( "Moyennes :      " );
+  for [i = 1 to nbCalcules] {
+    printf( "%s => %6d; ", modes[i], moyennes[i] )
+  }
+  printf( "\n" );
+
+  #
+  # On imprime les accelerations, si disponibles.
+  #
+  if ( tempsSeq != 0 ) {  
+    printf( "Accelerations : " );
+    for [i = 1 to nbCalcules] {
+      printf( "%s => %6.3f; ", modes[i], real(tempsSeq) / real(moyennes[i]) )
+    }
+    printf( "\n" );
+  }
+end

@@ -6,76 +6,26 @@
 
 global Pi
 
-  #####################################################
-  # Predicat.
-  #####################################################
-  op egaux( Reel r1, Reel r2 ) returns bool b
-  # POSTCONDITION ABSTRAITE
-  #   b <=> toReal(r1) = toReal(r2)
-  # POSTCONDITION CONCRETE
-  #   b <=> r1 et r2 representent le meme nombre reel
-  #         & estNormalise(r1) & estNormaliser(r2)
-
-
-  #####################################################
-  # Operations arithmetiques.
-  #####################################################
-
-  op calculS( Reel r1, Reel r2 ) returns Reel r
-  # POSTCONDITION
-  #   r = r1 * r2
+  op calculS(int nbPoints) returns real pi
   # CONTRAINTE
   #   Algorithme sequentiel iteratif.
 
-  op calculPIF( Reel r1, Reel r2 ) returns Reel r
-  # POSTCONDITION
-  #   r = r1 * r2
+  op calculPIF(int nbPoints) returns real pi
   # CONTRAINTE
   #   Algorithme avec parallelisme iteratif a granularite (tres) fine (sans recursion).
 
-  op calculPIGA( Reel r1, Reel r2 ) returns Reel r
-  # POSTCONDITION
-  #   r = r1 * r2
+  op calculPIGA(int nbPoints) returns real pi
   # CONTRAINTE
   #   Algorithme avec parallelisme iteratif a granularite grossiere (sans recursion),
   #   avec distribution par tranche d'elements adjacents.
 
-  op calculPIGC( Reel r1, Reel r2 ) returns Reel r
-  # POSTCONDITION
-  #   r = r1 * r2
+  op calculPIGC(int nbPoints) returns real pi
   # CONTRAINTE
   #   Algorithme avec parallelisme iteratif a granularite grossiere (sans recursion),
   #   avec distribution cyclique des elements.
 
-  op calculPST( Reel r1, Reel r2 ) returns Reel r
-  # POSTCONDITION
-  #   r = r1 * r2
+  op calculPST(int nbPoints) returns real pi
   # CONTRAINTE
   #   Algorithme avec parallelisme de style sac de taches.
 
-  const int N = 1024;   # Nombre max. de cars pour resultat de toStringN
-  
-  op toString ( Reel r, res string[*] s )
-  op toStringN( Reel r ) returns string[N] s
-  # POSTCONDITION
-  #   Une chaine representant le reel r est produite dans s.
-  #   egaux( reel(s), r )
-  #   estNormalise( r )
- 
-
-  #####################################################
-  # Operation auxiliaire pour debogage.
-  #####################################################
-
-  op dump( string[*] nom, Reel r )
-
-
-  #####################################################
-  # Operation auxiliaire pour parametre d'execution.
-  #####################################################
-
-  op definirTailleTache( int tt )
-  # POSTCONDITION
-  #   Indique la taille des taches pour l'operation multiplierPST.
-
-body Reels separate
+body Pi separate
