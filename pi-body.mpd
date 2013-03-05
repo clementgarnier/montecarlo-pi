@@ -1,10 +1,23 @@
 body Pi
 
-  import Geometrie;  
-  import Barriere;
-
   bool DEBUG = false;       # Pour trace de debogage
   #DEBUG = true;  
+
+  ##################################################################
+  # Variables et operations pour la manipulation d'un Point
+  ##################################################################
+  # Type fondamental : un point est représenté par ses coordonnées x et y.  
+
+  procedure estDansCercle(Point p) returns bool b
+  {      
+    b = (p.x**2 + p.y**2 <= 1);
+  }
+
+  procedure genererPoint() returns Point p
+  {
+    p.x = random(); #mettre 1.0 pour tester les temps d'exécution
+    p.y = random(); #mettre 1.0 pour tester les temps d'exécution
+  }
 
   ##################################################################
   # Variables et operations pour la manipulation du sac de taches.
@@ -61,6 +74,12 @@ body Pi
   {
     r = 4*(real(nbPtsDansCercle)/nbPoints);
   }
+ 
+  procedure traiterPoint() returns bool estInclus 
+  {
+     Point p = genererPoint();
+     estInclus = estDansCercle(p);
+  }
 
   ##################################################
   # Version sequentielle.
@@ -68,16 +87,19 @@ body Pi
 
   proc calculS( nbPoints ) returns r
   {  
+     if (DEBUG) {
+       printf( "calculS( %d )\n", nbPoints );
+     }
+
      int nbPtsDansCercle = 0;
 
      # Création des points et vérfication de position
      for [i = 1 to nbPoints] {
-        Point p = initialiserPoint();
-	    if (estDansCercle(p)) {
-	        nbPtsDansCercle++;
+        Point p = genererPoint();
+	if (estDansCercle(p)) {
+	   nbPtsDansCercle++;
         }	     
-        free(p);
-     }
+     }  
      
      # Calcul de PI
      r = calculPI(nbPtsDansCercle, nbPoints);        
@@ -86,30 +108,21 @@ body Pi
   ##################################################
   # Version parallele iterative granularite fine.
   ##################################################
-   
-  procedure traiterPointFin(ref int listeNbPoints[*], int i) 
-  {
-     Point p = initialiserPoint();
-     if (estDansCercle(p)) {
-        listeNbPoints[i] = 1;
-     }
-     free(p);
-  }
 
   proc calculPIF( nbPoints ) returns r
   {
-     int listeNbPoints[nbPoints] = ([nbPoints] 0);
+     bool listeNbPoints[nbPoints] = ([nbPoints] false);
      int nbPtsDansCercle = 0;
     
      # Création des points et vérfication de position
      co [i = 1 to nbPoints]
-        traiterPointFin(listeNbPoints, i);	      
+        listeNbPoints[i] = traiterPoint();	      
      oc  
 
      for [j = 1 to nbPoints] {
-        if (listeNbPoints[j] > 0)
+        if (listeNbPoints[j])
         {
-           nbPtsDansCercle += listeNbPoints[j];
+           nbPtsDansCercle += 1;
         }
      }
      
@@ -122,39 +135,42 @@ body Pi
   # Version parallele iterative granularite grossiere.
   ##################################################
 
-  #cap Barriere barriere;
-  sem totLibre = 1;   # Semaphore protegeant l'acces à nbPointsDansCercle
-
-  procedure traiterPointGros() returns bool estInclus 
+  procedure traitementThread(int nbPtsTotThread) returns int nbPtsInclusCercle
   {
-     Point p = initialiserPoint();
-     estInclus = estDansCercle(p);
-     free(p);
-  }
-
-  procedure traitementThread(int nbPointsThread, ref int nbPointsDansCercle)
-  {
-     int nbPtsThreadInclus = 0;
-     for [j = 1 to nbPointsThread]
+     if (DEBUG) {
+       printf( "traitementThread( %d )\n", nbPtsTotThread );
+     }
+     nbPtsInclusCercle = 0;
+     for [j = 1 to nbPtsTotThread]
      {
-        if (traiterPointGros())
+        if (traiterPoint())
         {
-           nbPtsThreadInclus++;
+           nbPtsInclusCercle++;
         }
      }
-     #barriere.attendre();
-     P(totLibre); nbPointsDansCercle += nbPtsThreadInclus; V(totLibre);
   }
 
   proc calculPIGA( nbPoints ) returns r
   {
      int nbPtsDansCercle = 0;
      int nbProcs = getNbProcs();
+     if (nbPoints%nbProcs > 0)
+     {
+        printf( "*** nbPoints doit être un multiple de nbProcs\n" );
+        stop(1);
+     }
+
+     int lstNbPtsInclParThread[nbProcs] = ([nbProcs] 0);
 
      # Création des points et vérfication de position
      co [i = 1 to nbProcs]
-        traitementThread(nbPoints/nbProcs, nbPtsDansCercle);	      
+        lstNbPtsInclParThread[i] = traitementThread(nbPoints/nbProcs);	      
      oc  
+     
+     for [k = 1 to nbProcs]
+     {
+        nbPtsDansCercle += lstNbPtsInclParThread[k];
+     }
      
      # Calcul de PI
      r = calculPI(nbPtsDansCercle, nbPoints);  
@@ -164,23 +180,34 @@ body Pi
   # Version parallele sac de taches.
   ##################################################
 
-  procedure executerTache(ref int nbPtsDansCercle)
+  procedure executerTache() returns int nb
   {
-      while(obtenirTache()) {
-          traitementThread(tailleTache, nbPtsDansCercle);
+      nb = 0;
+      while( obtenirTache() ) {
+          nb += traitementThread(tailleTache);
       }
   }
 
   proc calculPST( nbPoints) returns r
   {
      int nbPtsDansCercle = 0;
+     int nbProcs = getNbProcs();
+     int nbTaches = nbPoints/tailleTache;
+
+     int lstNbPtsInclParThread[nbProcs] = ([nbProcs] 0);
       
      initSacDeTaches(nbPoints);
 
-     co[i = 1 to getNbProcs()]
-         executerTache(nbPtsDansCercle);
+     co[i = 1 to nbProcs]
+        lstNbPtsInclParThread[i] = executerTache();
      oc
 
+     for [k = 1 to nbProcs]
+     {
+        nbPtsDansCercle += lstNbPtsInclParThread[k];
+     }
+
+     # Calcul de PI
      r = calculPI(nbPtsDansCercle, nbPoints);
   }
 end

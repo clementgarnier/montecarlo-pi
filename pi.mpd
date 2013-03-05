@@ -6,6 +6,18 @@
 
 global Pi
 
+  #####################################################
+  # Types d'objets pour les calculs.
+  ####################################################
+  type Point = rec(
+    real x;
+    real y;
+  );
+
+  #####################################################
+  # Fonctions principales du programme.
+  #####################################################
+
   op calculS(int nbPoints) returns real pi
   # CONTRAINTE
   #   Algorithme sequentiel iteratif.
@@ -37,6 +49,6 @@ global Pi
 
   const real PRECISION = 0.01;
   const real PI = 3.1415926535;
-  const int  NB_POINTS = 100000;
+  const int  NB_POINTS = 200000;
 
 body Pi separate

@@ -1,7 +1,7 @@
 
 # Module pour gérer des points dans un espace à deux dimensions.
 
-global Geometrie
+global Geometrie()
 
     # Type fondamental : un point est représenté par ses coordonnées x et y.
     
@@ -12,26 +12,28 @@ global Geometrie
       real y;
     );    
 
-    op point(real x, real y) returns Point p
-
-    op estDansCercle(Point p) returns bool b 
-
-    op initialiserPoint() returns Point p
-
-body Geometrie
-    proc point( x, y ) returns p
+    procedure point(real x, real y) returns Point p
     {
       p = new(PointRec)
       p^.x = x;
       p^.y = y;
     }
 
-    proc estDansCercle( p ) returns b
+    procedure estDansCercle(Point p) returns bool b
     {
-      b = (p^.x**2 + p^.y**2 <= 1);
+      #if (p^.x < MIDDLE_EDGE & p^.y < MIDDLE_EDGE))
+      #{
+      #}
+      #else if (p^.x < MIDDLE_EDGE & p^.y < MIDDLE_EDGE)
+      #{
+      #}
+      #else
+      #{       
+         b = (p^.x**2 + p^.y**2 <= 1);
+      #}
     }
 
-    proc initialiserPoint() returns p
+    procedure initialiserPoint() returns Point p
     {
       p = new(PointRec);
       p^.x = random();
