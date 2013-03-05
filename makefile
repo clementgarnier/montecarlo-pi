@@ -14,7 +14,7 @@ MPDLFLAGS = -w
 
 # Tests pour verifier que le module Pi fonctionne correctement.
 
-TESTS_EXEC = tst0.out tst1.out tst2.out tst3.out
+TESTS_EXEC = mesurer-temps invoquer tst0.out tst1.out tst2.out tst3.out
 
 compile: $(TESTS_EXEC)
 
@@ -96,8 +96,7 @@ $I/MesurerTemps.spec: mesurer-temps.mpd
 	$(MPD) $(MPDFLAGS) -s mesurer-temps.mpd
 
 $I/Invoquer.o: $I/Invoquer.spec $I/Pi.spec\
- $I/Pi.o $I/MesurerTemps.spec $I/MesurerTemps.o \
- invoquer.mpd
+ $I/Pi.o $I/MesurerTemps.spec $I/MesurerTemps.o invoquer.mpd
 	$(MPD) $(MPDFLAGS) -b invoquer.mpd
 
 $I/Invoquer.spec: invoquer.mpd
